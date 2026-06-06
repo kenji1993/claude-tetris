@@ -39,6 +39,9 @@ jobs:
                  `gh issue edit ${{ github.event.issue.number }} --add-label "label1,label2"`
 
             2. DIAGNÓSTICO GENERAL
+               - Escribe el comentario en formato Markdown compatible con GitHub
+                 (encabezados `##`, listas con `-`, bloques de código con ``` y el
+                 lenguaje, negritas con `**`), de modo que se renderice correctamente.
                - Publica UN comentario en el issue con un diagnóstico técnico que
                  nos sirva luego para implementar la solución. Incluye:
                  - Resumen del problema o petición
