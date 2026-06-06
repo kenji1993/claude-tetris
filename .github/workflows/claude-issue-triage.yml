@@ -1,0 +1,55 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*),Bash(gh label create:*)"'
+          prompt: |
+            Eres el clasificador de issues del repositorio ${{ github.repository }}.
+            Acaba de ser ${{ github.event.action }} el issue #${{ github.event.issue.number }}.
+
+            Tu tarea tiene dos partes:
+
+            1. ETIQUETADO
+               - Lee el issue: `gh issue view ${{ github.event.issue.number }}`
+               - Lista las labels existentes: `gh label list`
+               - Asigna SOLO labels que ya existan y sean apropiadas
+                 (tipo: bug/enhancement/question/documentation; y prioridad si
+                 corresponde). Si falta una label claramente necesaria, créala con
+                 `gh label create` con un color sensato y luego asígnala.
+               - Aplica las labels con:
+                 `gh issue edit ${{ github.event.issue.number }} --add-label "label1,label2"`
+
+            2. DIAGNÓSTICO GENERAL
+               - Publica UN comentario en el issue con un diagnóstico técnico que
+                 nos sirva luego para implementar la solución. Incluye:
+                 - Resumen del problema o petición
+                 - Causa probable o área del código afectada (este es un Tetris en
+                   JS vanilla: index.html, style.css, game.js)
+                 - Archivos/funciones que probablemente haya que tocar
+                 - Pasos sugeridos a alto nivel para la solución
+                 - Riesgos o casos borde a tener en cuenta
+               - Publica el comentario con:
+                 `gh issue comment ${{ github.event.issue.number }} --body "..."`
+
+            Escribe todo en español, conciso y accionable. No implementes código.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
