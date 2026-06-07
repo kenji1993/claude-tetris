@@ -1,3 +1,43 @@
+:root {
+  --bg: #0f0f17;
+  --text: #e0e0e0;
+  --accent: #7aa2f7;
+  --accent-hover: #9bbdff;
+  --accent-contrast: #0f0f17;
+  --accent-glow: rgba(122, 162, 247, 0.4);
+  --muted: #555570;
+  --border: #2a2a3a;
+  --board-bg: #1a1a25;
+  --board-shadow: rgba(0, 0, 0, 0.6);
+  --grid-line: #22222e;
+  --danger: #e57373;
+  --kbd-bg: #22223a;
+  --kbd-border: #3a3a5a;
+  --kbd-text: #aaa;
+  --control-text: #888;
+  --overlay-bg: rgba(10, 10, 20, 0.75);
+}
+
+:root.light {
+  --bg: #f2f2f7;
+  --text: #1d1d2b;
+  --accent: #3b5bdb;
+  --accent-hover: #5b7ae0;
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(59, 91, 219, 0.25);
+  --muted: #6b6b85;
+  --border: #d4d4e2;
+  --board-bg: #ffffff;
+  --board-shadow: rgba(0, 0, 0, 0.15);
+  --grid-line: #e2e2ee;
+  --danger: #d6453d;
+  --kbd-bg: #e7e7f0;
+  --kbd-border: #c7c7da;
+  --kbd-text: #51516b;
+  --control-text: #6b6b85;
+  --overlay-bg: rgba(255, 255, 255, 0.75);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -5,18 +45,39 @@
 }
 
 body {
-  background: #0f0f17;
-  color: #e0e0e0;
+  background: var(--bg);
+  color: var(--text);
   font-family: system-ui, -apple-system, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   user-select: none;
+  transition: background 0.2s, color 0.2s;
 }
 
 .wrapper {
   position: relative;
+}
+
+#theme-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#theme-toggle:hover {
+  border-color: var(--accent);
 }
 
 .game-title {
@@ -24,10 +85,10 @@ body {
   font-size: 36px;
   font-weight: 800;
   letter-spacing: 10px;
-  color: #7aa2f7;
+  color: var(--accent);
   text-align: center;
   margin-bottom: 16px;
-  text-shadow: 0 0 20px rgba(122, 162, 247, 0.4);
+  text-shadow: 0 0 20px var(--accent-glow);
 }
 
 .game-container {
@@ -38,10 +99,10 @@ body {
 
 #board {
   display: block;
-  border: 1px solid #2a2a3a;
-  background: #1a1a25;
+  border: 1px solid var(--border);
+  background: var(--board-bg);
   border-radius: 4px;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 40px var(--board-shadow);
 }
 
 /* ---- Panel lateral ---- */
@@ -62,7 +123,7 @@ body {
 .label {
   font-size: 10px;
   letter-spacing: 2px;
-  color: #555570;
+  color: var(--muted);
   font-weight: 600;
 }
 
@@ -70,14 +131,14 @@ body {
   font-family: 'Courier New', Courier, monospace;
   font-size: 26px;
   font-weight: 700;
-  color: #7aa2f7;
+  color: var(--accent);
   letter-spacing: 1px;
 }
 
 #next-canvas {
   display: block;
-  border: 1px solid #2a2a3a;
-  background: #1a1a25;
+  border: 1px solid var(--border);
+  background: var(--board-bg);
   border-radius: 4px;
 }
 
@@ -91,20 +152,20 @@ body {
 
 .controls li {
   font-size: 12px;
-  color: #888;
+  color: var(--control-text);
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 kbd {
-  background: #22223a;
-  border: 1px solid #3a3a5a;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
   border-radius: 3px;
   padding: 1px 6px;
   font-size: 11px;
   font-family: inherit;
-  color: #aaa;
+  color: var(--kbd-text);
 }
 
 /* ---- Overlay ---- */
@@ -114,7 +175,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 20, 0.75);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   border-radius: 4px;
 }
@@ -135,19 +196,19 @@ kbd {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 4px;
-  color: #e57373;
+  color: var(--danger);
 }
 
 #overlay-score {
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
-  color: #7aa2f7;
+  color: var(--accent);
 }
 
 #restart-btn {
   margin-top: 8px;
-  background: #7aa2f7;
-  color: #0f0f17;
+  background: var(--accent);
+  color: var(--accent-contrast);
   border: none;
   border-radius: 6px;
   padding: 10px 28px;
@@ -159,5 +220,5 @@ kbd {
 }
 
 #restart-btn:hover {
-  background: #9bbdff;
+  background: var(--accent-hover);
 }
