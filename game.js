@@ -4,6 +4,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
+// Paleta base (skin Retro). La paleta activa vive en `activeSkin.colors`.
 const COLORS = [
   null,
   '#4dd0e1', // I - cyan
@@ -14,6 +15,37 @@ const COLORS = [
   '#4fc3f7', // J - pale blue
   '#ffb74d', // L - orange
 ];
+
+// ---- Skins / temas visuales ----
+// Cada skin define su propia paleta (índice 1..7) y un estilo de dibujo que
+// drawBlock consume. Independiente del toggle claro/oscuro (theme).
+const SKINS = {
+  retro: {
+    name: 'Retro',
+    colors: COLORS,
+    boardBg: null, // usa el --board-bg del tema activo
+    style: 'flat',
+  },
+  neon: {
+    name: 'Neón',
+    colors: [null, '#00e5ff', '#ffea00', '#e040fb', '#00e676', '#ff1744', '#2979ff', '#ff9100'],
+    boardBg: '#05050a',
+    style: 'neon',
+  },
+  pastel: {
+    name: 'Pastel',
+    colors: [null, '#a8e6e3', '#fdf2b0', '#e0bbe4', '#c5e8b7', '#f7b2b7', '#b3d4fc', '#ffd9a8'],
+    boardBg: null,
+    style: 'rounded',
+  },
+  pixel: {
+    name: 'Pixel Art',
+    colors: COLORS,
+    boardBg: null,
+    style: 'pixel',
+  },
+};
+const DEFAULT_SKIN = 'retro';
 
 const PIECES = [
   null,
@@ -40,10 +72,12 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
 const GRID_COLORS = { dark: '#22222e', light: '#e2e2ee' };
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let activeSkin = SKINS[DEFAULT_SKIN];
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -159,16 +193,83 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
+// Esquina redondeada manual (compat. con navegadores sin roundRect).
+function roundedRectPath(context, px, py, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
+  context.beginPath();
+  context.moveTo(px + r, py);
+  context.arcTo(px + w, py, px + w, py + h, r);
+  context.arcTo(px + w, py + h, px, py + h, r);
+  context.arcTo(px, py + h, px, py, r);
+  context.arcTo(px, py, px + w, py, r);
+  context.closePath();
+}
+
+// Primitiva central de dibujo. Despacha sobre el estilo de la skin activa.
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = activeSkin.colors[colorIndex];
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const s = size - 2;
+  context.save();
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  context.globalAlpha = 1;
+
+  switch (activeSkin.style) {
+    case 'neon': {
+      context.shadowColor = color;
+      context.shadowBlur = size * 0.5;
+      context.fillStyle = color;
+      context.fillRect(px, py, s, s);
+      // núcleo más claro para reforzar el brillo
+      context.shadowBlur = 0;
+      context.fillStyle = 'rgba(255,255,255,0.25)';
+      context.fillRect(px + s * 0.3, py + s * 0.3, s * 0.4, s * 0.4);
+      break;
+    }
+    case 'rounded': {
+      const radius = size * 0.28;
+      roundedRectPath(context, px, py, s, s, radius);
+      context.fillStyle = color;
+      context.fill();
+      // highlight suave
+      context.fillStyle = 'rgba(255,255,255,0.25)';
+      roundedRectPath(context, px + 2, py + 2, s - 4, (s - 4) * 0.4, radius * 0.6);
+      context.fill();
+      break;
+    }
+    case 'pixel': {
+      context.fillStyle = color;
+      context.fillRect(px, py, s, s);
+      // textura: cuadrícula 4x4 con celdas más claras/oscuras
+      const cell = s / 4;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if ((r + c) % 2 === 0) continue;
+          context.fillStyle = (r * 4 + c) % 3 === 0
+            ? 'rgba(255,255,255,0.18)'
+            : 'rgba(0,0,0,0.18)';
+          context.fillRect(px + c * cell, py + r * cell, cell, cell);
+        }
+      }
+      // borde oscuro tipo pixel art
+      context.strokeStyle = 'rgba(0,0,0,0.35)';
+      context.lineWidth = 1;
+      context.strokeRect(px + 0.5, py + 0.5, s - 1, s - 1);
+      break;
+    }
+    case 'flat':
+    default: {
+      context.fillStyle = color;
+      context.fillRect(px, py, s, s);
+      // highlight
+      context.fillStyle = 'rgba(255,255,255,0.12)';
+      context.fillRect(px, py, s, 4);
+      break;
+    }
+  }
+
+  context.restore();
 }
 
 function drawGrid() {
@@ -190,6 +291,10 @@ function drawGrid() {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (activeSkin.boardBg) {
+    ctx.fillStyle = activeSkin.boardBg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   drawGrid();
 
   // board
@@ -213,6 +318,10 @@ function draw() {
 function drawNext() {
   const NB = 30;
   nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+  if (activeSkin.boardBg) {
+    nextCtx.fillStyle = activeSkin.boardBg;
+    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+  }
   const shape = next.shape;
   const offX = Math.floor((4 - shape[0].length) / 2);
   const offY = Math.floor((4 - shape.length) / 2);
@@ -317,5 +426,24 @@ themeToggle.addEventListener('click', () => {
 });
 
 setTheme(document.documentElement.classList.contains('light'));
+
+function setSkin(skinKey) {
+  const key = SKINS[skinKey] ? skinKey : DEFAULT_SKIN;
+  activeSkin = SKINS[key];
+  document.documentElement.setAttribute('data-skin', key);
+  if (skinSelect) skinSelect.value = key;
+  localStorage.setItem('tetris-skin', key);
+  // re-render inmediato sin recargar
+  if (board && current && next) {
+    draw();
+    drawNext();
+  }
+}
+
+if (skinSelect) {
+  skinSelect.addEventListener('change', () => setSkin(skinSelect.value));
+}
+
+setSkin(localStorage.getItem('tetris-skin') || DEFAULT_SKIN);
 
 init();

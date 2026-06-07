@@ -38,6 +38,16 @@
   --overlay-bg: rgba(255, 255, 255, 0.75);
 }
 
+/* ---- Skin Neón: fondo del tablero oscuro y brillo de acento ---- */
+:root[data-skin="neon"] {
+  --board-bg: #05050a;
+  --grid-line: #15151f;
+  --board-shadow: rgba(0, 229, 255, 0.25);
+  --accent: #00e5ff;
+  --accent-hover: #5cf0ff;
+  --accent-glow: rgba(0, 229, 255, 0.5);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -140,6 +150,31 @@ body {
   border: 1px solid var(--border);
   background: var(--board-bg);
   border-radius: 4px;
+}
+
+/* ---- Selector de skin ---- */
+#skin-select {
+  width: 100%;
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#skin-select:hover {
+  border-color: var(--accent);
+}
+
+#skin-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* ---- Controles ---- */
